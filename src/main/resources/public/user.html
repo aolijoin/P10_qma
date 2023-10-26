@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <link rel="stylesheet" href="/css/elementUI.css">
+    <script src="/js/vue.js"></script>
+    <script src="/js/elementUI.js"></script>
+    <script src="/js/axios.js"></script>
+    <script src="/js/util.js"></script>
+
+</head>
+<body>
+<div id="app">
+    <el-input v-model="query.dept" placeholder="查询科室" style="width: 180px"></el-input>
+    <el-input v-model="query.doctor" placeholder="查询医生" style="width: 180px"></el-input>
+    <el-button type="primary" @click="getHospital">立即查询</el-button>
+    <el-button type="primary" @click="download">导出</el-button>
+    <el-table :data="tableData">
+        <!--        <el-table-column prop="id" label="编号"></el-table-column>-->
+        <el-table-column prop="dept" label="科室"></el-table-column>
+        <el-table-column prop="doctor" label="医生"></el-table-column>
+        <el-table-column prop="time" label="时间"></el-table-column>
+        <el-table-column prop="num" label="余号"></el-table-column>
+        <el-table-column label="操作">
+            <template slot-scope="scope">
+                <el-button type="primary" :disabled="scope.row.num <1" @click="registered(scope.row)"> 立即挂号
+                </el-button>
+            </template>
+        </el-table-column>
+    </el-table>
+
+    <el-pagination @size-change="handlerSizeChange" @current-change="handlerCurrentChange" :current-page="page.page"
+                   :page-sizes="[3,6,10,15]" :page-size="page.size" layout="total,sizes,prev,pager,next,jumper"
+                   :total="page.total"></el-pagination>
+
+    <el-dialog title="挂号信息" :visible.sync="dialogTableVisible">
+        <el-form :model="form">
+            <el-form-item label="订单号">
+                {{form.id}}
+                <!--                <el-input v-model="form.id" autocomplete="off"></el-input>-->
+            </el-form-item>
+            <el-form-item label="就诊科室">
+                {{form.dept}}
+                <!--                <el-input v-model="form.dept" autocomplete="off"></el-input>-->
+            </el-form-item>
+            <el-form-item label="就诊时间">
+                {{form.time}}
+                <!--                <el-input v-model="form.time" autocomplete="off"></el-input>-->
+            </el-form-item>
+            <el-form-item label="就诊医生">
+                {{form.doctor}}
+                <!--                <el-input v-model="form.doctor" autocomplete="off"></el-input>-->
+            </el-form-item>
+            <el-form-item label="挂号费">
+                {{form.money}}
+                <!--                <el-input v-model="form.money" autocomplete="off"></el-input>-->
+            </el-form-item>
+            <el-form-item label="就诊人">
+                {{form.user}}
+                <!--                <el-input v-model="form.user" autocomplete="off"></el-input>-->
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogTableVisible = false">取 消</el-button>
+            <el-button type="primary" @click="insertOrder">确 定</el-button>
+        </div>
+    </el-dialog>
+</div>
+<script>
+    new Vue({
+        el: '#app',
+        data: {
+            dialogTableVisible: false,
+            // dialogFormVisible: false,
+            tableData: [],
+            page: {
+                page: 1,
+                size: 3,
+                total: 0
+            },
+            query: {
+                dept: '',
+                doctor: ''
+            },
+            form: {}
+        },
+
+        methods: {
+            download() {
+                // axios.post(`order/download`).then(res => {                })
+                location.href='http://127.0.0.1:8080/order/download'
+            },
+            insertOrder() {
+                this.form.id = null
+                axios.post(`order/insert`, this.form).then(res => {
+                    if (res.data.code === 200) {
+                        this.$message.success("成功")
+                        this.dialogTableVisible = false
+                        this.getHospital()
+                    } else {
+                        this.$message.error(res.data.msg)
+                    }
+                })
+            },
+            registered(row) {
+                this.dialogTableVisible = true
+                console.log(this.dialogTableVisible)
+                let user = getQueryString('name')
+                this.form.id = row.id
+                this.form.time = row.time
+                this.form.dept = row.dept
+                this.form.doctor = row.doctor
+                this.form.money = 50
+                this.form.user = user
+                console.log(this.form)
+            },
+            handlerSizeChange(val) {
+                this.page.size = val
+                this.getHospital()
+            },
+            handlerCurrentChange(val) {
+                this.page.page = val
+                this.getHospital()
+            },
+            getHospital() {
+                axios.post(`hospital/getPage?page=${this.page.page}&size=${this.page.size}`, this.query).then(res => {
+                    this.tableData = res.data.list;
+                    this.page.total = res.data.total;
+                })
+            }
+        },
+        created() {
+            this.getHospital()
+        }
+
+
+    })
+</script>
+</body>
+</html>

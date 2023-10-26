@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>user</title>
+
+    <link rel="stylesheet" href="/css/elementUI.css">
+    <script src="/js/vue.js"></script>
+    <script src="/js/elementUI.js"></script>
+    <script src="/js/axios.js"></script>
+    <script src="/js/util.js"></script>
+
+
+</head>
+<body>
+<div id="login" v-if="yes">
+    账户
+    <el-input v-model="user.username" placeholder="请输入内容"></el-input>
+    密码
+    <el-input v-model="user.password" type="password" placeholder="请输入内容"></el-input>
+    <el-checkbox-group v-model="token">
+        <el-checkbox label="true">记住我</el-checkbox>
+    </el-checkbox-group>
+    <el-button type="primary" @click="loginUp">登录</el-button>
+</div>
+<div id="app" v-if="login.data.yes===false">
+    <h1>6666666666666</h1>
+</div>
+</body>
+<script>
+    const login = new Vue({
+        el: '#login',
+        data: {
+            token: [],
+            yes: true,
+            user: {
+                username: '',
+                password: '',
+            }
+        },
+        methods: {
+            loginUp() {
+                let jwt = this.token.join('')
+                console.log(jwt)
+                axios.post(`user/login?token=${jwt}`, this.user).then(res => {
+                    if (res.data.code === 200) {
+                        // this.yes = false
+                        if (jwt) {
+                            localStorage.setItem('id', res.data.data.id)
+                            localStorage.setItem('token', jwt)
+                        }
+                        location.href = "user.html?name=" + res.data.data.name
+                    } else {
+                        this.$message.error(res.data.msg)
+                    }w
+
+                })
+            },
+            loginLike() {
+                this.token = [localStorage.getItem('token')]
+                if (this.token !== '') {
+                    let id = localStorage.getItem("id")
+                    axios.post(`user/loginLike?id=${id}`).then(res => {
+                        if (res.data.code === 200) {
+                            this.yes = false
+                            location.href = "user.html?name=" + res.data.data.name
+                        } else {
+                            this.$message.info(res.data.msg)
+                        }
+                    })
+                }
+            }
+        },
+        created() {
+            this.loginLike()
+
+        }
+    })
+
+    const app = new Vue({
+        el: '#app',
+        data: {},
+        methods: {},
+        created() {
+        }
+    })
+</script>
+</html>
